@@ -1,27 +1,45 @@
 'use strict'
 
 const twitter = require('twitter-lite');
-const config = module.exports = {
-  consumer_key: 'xx',
-  consumer_secret: 'xx',
-  access_token_key: 'x-xx',
-  access_token_secret: 'xx'
-};
-const client = new twitter(config);
 
 module.exports = async (event, context) => {
-  let result = await Send(JSON.stringify(event.body))
-  return context
-    .status(200)
-    .headers({
-      "Content-type": event.headers["content-type"]
-    })
-    .succeed(result)
+  //async function run() {
+  try {
+    let req = event.body;
+
+    //let req = JSON.parse(event.body);
+    let result = await Send(req)
+    let statuscode = 200;
+    if (result.status != "success") {
+      statuscode = 500;
+      result.message = JSON.stringify(result.message);
+    }
+    console.log(result);
+
+    return context
+      .status(statuscode)
+      .headers({
+        "Content-type": "application/json; charset=utf-8"
+      })
+      .succeed(result)
+  } catch (err) {
+    console.log(err);
+    return context
+      .status(500)
+      .headers({
+        "Content-type": "application/json; charset=utf-8"
+      })
+      .succeed({ status: 'atcerror', message: err.toString() })
+  }
 }
-function Send(content) {
+async function Send(req) {
   return new Promise(resolve => {
-    client.post('statuses/update', { status: content }).then(res => {
-      resolve(' You successfully tweeted this : "' + res.text + '"');
-    }).catch(console.error);
+    const client = new twitter(req.credential);
+    client.post('statuses/update', { status: req.message }).then(res => {
+      resolve({ status: 'success', message: 'You successfully tweeted this : ' + res.text });
+    }).catch(err => {
+      resolve({ status: 'serror', message: JSON.stringify(err) });
+    });
   });
 }
+//run();
