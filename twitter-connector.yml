@@ -7,6 +7,10 @@ functions:
     lang: node14
     handler: ./src
     image: apimate/twitter-connector:1.0.0
+    labels:
+      com.openfaas.scale.min: 1
+      com.openfaas.scale.max: 20
+      com.openfaas.scale.factor: 20
     environment:
         read_timeout: "65s"
         write_timeout: "65s"
